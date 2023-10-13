@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from urls import SITE_URLS
 
+# instancia de la clase Flask, que se utiliza para crear una aplicación web en Flask.
 app = Flask(__name__)
 
 # cerrojo para sincronizar la escritura en los archivos
@@ -11,14 +12,16 @@ file_lock_scraper1 = threading.Lock()
 file_lock_scraper2 = threading.Lock()
 file_lock_scraper3 = threading.Lock()
 
-# función para guardar datos en un archivo
+# La función abre el archivo especificado en modo de adición ('a'), 
+# Luego, itera sobre los elementos en la lista data y escribe cada elemento seguido de un salto de línea en el archivo.
 def save_to_file(data, filename, file_lock, scraper_name):
     with open(filename, 'a', encoding='utf-8') as file:
         for item in data:
             file.write("%s\n" % item)
     print(f"Datos de {scraper_name} guardados exitosamente en {filename}")
 
-# Definir la clase Scraper1
+# definimos la clase Scraper1. El método scrape() que se encarga de hacer scraping de un sitio web 
+# y guardar los datos en un archivo usando el cerrojo correspondiente.
 class Scraper1:
     def __init__(self):
         self.name = "Scraper1"
@@ -36,7 +39,7 @@ class Scraper1:
                 # Encuentra y extrae los datos del sitio web usando BeautifulSoup
                 paragraphs = soup.find_all('p')
 
-                # Procesa los datos 
+                # Procesa los datos: itera sobre la lista paragraphs y agrega el texto de cada párrafo a la lista scraped_data.
                 scraped_data = [paragraph.text for paragraph in paragraphs]
 
                 # Guarda los datos en un archivo usando el cerrojo
@@ -105,7 +108,10 @@ class Scraper3:
             # Maneja cualquier excepción que pueda ocurrir durante el scraping
             print(f"Error al hacer scraping en {url}: {e}")
 
-# Función principal para realizar el scraping y servir como frontend utilizando Flask
+# Función principal para realizar el scraping.
+# decorador que Flask utiliza para asignar una función a una ruta. la función index() se asignará a la ruta /.
+# cuando un usuario visita la URL, Flask ejecutará la función index() y
+# se encargara de realizar el scraping de los sitios web
 @app.route('/')
 def index():
     # instancias de las clases de scrapers
@@ -140,8 +146,8 @@ def index():
         thread.join()
 
     # Lee los datos de los archivos
-    scraped_data = read_data_from_files()
-    return render_template('index.html', data=scraped_data)
+    scraped_data = read_data_from_files() #lee los datos scarpeados y los devuelve en forma de un diccionario.
+    return render_template('index.html', data=scraped_data) # renderiza index.html. permite acceder data que contiene los datos scrapeados.
 
 # Función para leer los datos de los archivos y devolverlos como un diccionario
 def read_data_from_files():
@@ -151,8 +157,9 @@ def read_data_from_files():
     with open('Scraper2_output.txt', 'r', encoding='utf-8') as file:
         data[SITE_URLS[1]] = [line.strip() for line in file.readlines()]
     with open('Scraper3_output.txt', 'r', encoding='utf-8') as file:
-        data[SITE_URLS[2]] = [line.strip() for line in file.readlines()]  # Aquí también deberías usar la URL correcta para Scraper3
+        data[SITE_URLS[2]] = [line.strip() for line in file.readlines()]  
     return data
 
+# verificar si el script está siendo ejecutado directamente. Si es así, inicia la aplicación Flask en modo de depuración (debug=True)
 if __name__ == '__main__':
     app.run(debug=True)
